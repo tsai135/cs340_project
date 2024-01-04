@@ -1,0 +1,142 @@
+<!--
+    Based on the CS 340 starter code
+    Date: 12/05/23
+    Source URL: https://github.com/osu-cs340-ecampus/nodejs-starter-app
+-->
+
+<!--
+    Citation for the following lines:
+    - confirmation = confirm()
+    - if (confirmation){}
+    Date: 12/5/23
+    Adapted from Window confirm() on W3Schools
+    Source URL: https://www.w3schools.com/jsref/met_win_confirm.asp
+-->
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Manage Equipment Details</title>
+    <link rel="stylesheet" type="text/css" href="style.css">
+    <script language="JavaScript">
+        function showform(dowhat) {
+            document.getElementById('add').style.display = 'none';
+            document.getElementById('update').style.display = 'none';
+            document.getElementById('delete').style.display = 'none';
+
+            switch(dowhat) {
+                case 'add':
+                    document.getElementById('add').style.display = 'block';
+                    break;
+                case 'update':
+                    document.getElementById('update').style.display = 'block';
+                    break;
+                case 'delete':
+                    document.getElementById('delete').style.display = 'block';
+                    break;
+                default:
+                    document.getElementById('add').style.display = 'block';
+            }
+        }
+
+        function addEquipmentDetail() { showform('add'); }
+        function updateEquipmentDetail(equipmentID, propertyID) {
+    // Fetch the existing equipment details data and display it in the update form
+    fetch('/get-equipment-details/' + equipmentID)
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('input-propertyID-update').value = data.equipmentID;
+            document.getElementById('input-value-update').value = data.equipmentPropertyValue;
+
+            // Show the update form
+            showform('update');
+        })
+        .catch(error => console.error('Error:', error));
+
+    // Handle form submission for update
+    document.getElementById('update-equipment-details-form').onsubmit = function(event) {
+        event.preventDefault(); // Prevent the form from submitting in the default way
+
+        let updatedEquipmentDetails = {
+            equipmentPropertyValue: document.getElementById('input-value-update').value
+        };
+
+        fetch('/update-equipment-details-ajax/' + equipmentID + propertyID, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(updatedEquipmentDetails)
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.text();
+        })
+        .then(() => {
+            alert('Equipment detail updated successfully');
+            location.reload(); // Optionally, refresh the status list
+        })
+        .catch((error) => {
+            console.error('Error:', error);
+            alert('Error updating equipment detail');
+        });
+    };
+}
+
+
+    function nullifyEquipmentDetail(equipmentID, propertyID) {
+        const confirmation = confirm("Are you sure you want to make this property empty? Properties are linked to equipment type and thus cannot be deleted.");
+        if (confirmation) {
+            fetch('/nullify-equipment-detail-ajax/' + equipmentID + propertyID, { method: 'UPDATE' })
+                .then(() => {
+                    // Code to refresh or update the equipment details view
+                    // alert("Status deleted successfully");
+                    location.reload(); // Refresh the page to update the list
+                })
+                .catch(error => console.error('Error:', error));
+        }
+    }
+    </script>
+</head>
+{{!-- <body onload="addEquipmentDetail()"> --}}
+<body>
+    <h1>Manage Equipment Details</h1>
+    <nav>
+        <a href="index.hbs">Home</a>
+        <a href="view-equipment-transactions.hbs">Equipment Lookup</a>
+        <a href="manage-equipment-transactions.hbs">Equipment Transactions</a>
+        <a href="shop-inventory.hbs">Shop Inventory</a>
+    </nav>
+    <nav>
+        <h2>Advanced Tools</h2>
+        <a href="manage-equipments.hbs">Equipment Management</a>
+        <a href="manage-equipment-types.hbs">Equipment Types</a>
+        <a href="manage-properties.hbs">Item Properties</a>
+        <a href="manage-equipment-properties.hbs">Equipment Details</a>
+        <a href="manage-equipment-type-properties.hbs">Type-Specific Properties</a>
+        <a href="manage-statuses.hbs">Status Management</a>
+        <a href="manage-transition-statuses.hbs">Workflow Management</a>
+    </nav>
+    <br>
+<main>
+    <section>
+
+        <h1>Update Equipment Detail</h1>
+        <p>To add or update a property value to a piece of equipment, please enter its barcode and click "Submit"!</p>
+        <form id="search-by-barcode-form-ajax">
+            <label for="input-barcode">Barcode: </label>
+            <input type="text" name="input-barcode" id="input-barcode">
+            <input type="submit">
+        </form>
+        
+        <div id="form-container"></div>
+    </section>
+</main>
+
+</body>
+</html>
+
+{{!-- Embed our JavaScript to handle the DOM manipulation and AJAX request --}}
+<script src="./js/update_equipment_property.js"></script>

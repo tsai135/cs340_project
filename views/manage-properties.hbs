@@ -1,0 +1,195 @@
+<!-- This code is based on the CS 340 starter code, with the exception of the citations below.
+     Date: 12/02/23
+     Source URL: https://github.com/osu-cs340-ecampus/nodejs-starter-app -->
+
+<!-- manage-properties.hbs -->
+<!DOCTYPE html>
+<html>
+<script language="JavaScript">
+    /**
+     * Toggles visibility of different sections in the equipment management interface.
+     * 
+     * @param {string} dowhat - The action to be performed ('insert', 'update', 'delete', 'all', or default view).
+     * This function controls the display of four main sections: browse, insert, update, and delete.
+     * Based on the action, it hides or shows relevant sections to the user.
+     */
+    function showform(dowhat) {
+        // Hide all sections initially
+        document.getElementById('browse').style.display = 'none';
+        //document.getElementById('insert').style.display = 'none';
+        document.getElementById('update').style.display = 'none';
+        document.getElementById('delete').style.display = 'none';
+
+        // Based on the 'dowhat' parameter, make a specific section visible
+        switch(dowhat) {
+            case 'insert':
+                //document.getElementById('insert').style.display = 'block';
+                break;
+            case 'update':
+                document.getElementById('update').style.display = 'block';
+                break;
+            case 'delete':
+                document.getElementById('delete').style.display = 'block';
+                break;
+            case 'all':
+                document.getElementById('browse').style.display = 'block';
+                //document.getElementById('insert').style.display = 'block';
+                document.getElementById('update').style.display = 'block';
+                document.getElementById('delete').style.display = 'block';
+                break;
+            default:
+                // Default view is 'browse'
+                document.getElementById('browse').style.display = 'block';
+        }
+    }
+
+    // Helper functions to invoke 'showform' with specific actions
+    function newProperty() { showform('insert'); }
+    function updateProperty(pid) { showform('update'); }
+    function browseProperties() { showform ('browse'); }
+    function showAll() { showform ('all'); }
+</script>
+
+<head>
+    <title>Manage Item Properties</title>
+    <link rel="stylesheet" type="text/css" href="style.css">
+    <style>
+
+    </style>
+</head>
+<body onload="browseProperties()">
+    <h1>Create, View, Update and Delete Item Properties</h1>
+    <nav>
+        <a href="index.hbs">Home</a>
+        <a href="view-equipment-transactions.hbs">Equipment Lookup</a>
+        <a href="manage-equipment-transactions.hbs">Equipment Transactions</a>
+        <a href="shop-inventory.hbs">Shop Inventory</a>
+    </nav>
+    <br>
+    <nav>
+        <h2>Advanced Tools</h2>
+        <a href="manage-equipments.hbs">Equipment Management</a>
+        <a href="manage-equipment-types.hbs">Equipment Types</a>
+        <a href="manage-properties.hbs">Item Properties</a>
+        <a href="manage-equipment-properties.hbs">Equipment Details</a>
+        <a href="manage-equipment-type-properties.hbs">Type-Specific Properties</a>
+        <a href="manage-statuses.hbs">Status Management</a>
+        <a href="manage-transition-statuses.hbs">Workflow Management</a>
+    </nav>
+    <br>
+<div id="browse">
+    <main>
+        <section>
+
+
+            <h1>Add New Item Property</h1>
+
+            <!-- Form to add a record to the table  -->
+
+            <p>To add a new item property, please enter its information below and click 'Submit'!</p>
+            <form id="add-property-form-ajax">
+                <label for="input-propertyName">Name of Item Property: </label>
+                <input type="text" name="input-propertyName" id="input-propertyName">
+
+                <br>
+                <br>
+
+                <input type="submit">
+            </form>
+
+            <br>
+            <br>
+            <br>
+            <br>
+
+
+
+            <h1>Manage Existing Item Properties</h1>
+
+            <br>
+
+
+            {{!-- Create a table --}}
+            <table id="properties-table">
+                {{!-- Header section --}}
+                <thead>
+                    {{!-- For just the first row, we print each key of the row object as a header cell so we know what each column means when the page renders --}}
+                    <tr>
+                        <th>Property ID</th>
+                        <th>Property Name</th>
+                        <th>
+                            Action
+                        </th>
+                    </tr>
+                </thead>
+
+                {{!-- Body section --}}
+                <tbody>
+                    {{!-- For each row, print each attribute in order --}}
+                    {{#each data}}
+                    <tr>
+                        <td>{{this.propertyID}}</td>
+                        <td>{{this.propertyName}}</td>
+                        {{!-- <td>{{this.propertyDescription}}</td> --}}
+                        <td>
+                            <button class="btn edit" onClick="handleEditClick('{{this.propertyID}}')">Edit</button>
+                            <button class="btn delete" onClick="deleteProperty('{{this.propertyID}}', '{{this.propertyName}}')">Delete</button>
+                        </td>
+                    </tr>
+                    {{/each}}
+                </tbody>
+            </table>
+            <script src="./js/delete_property.js"></script>
+            
+            <br>
+            <br>
+            <br>
+            <br>
+
+        </section>
+    </main>
+</div>
+<p>&nbsp;</p>
+
+<div id="update" style="display: none">
+    <main>
+            <form id="update-property-form-ajax">
+                <label for="input-propertyID">ID: </label>
+                <input type="text" name="input-propertyID-update" id="input-propertyID-update">
+                
+                <label for="input-propertyName">Name of Item Property: </label>
+                <input type="text" name="input-propertyName-update" id="input-propertyName-update">
+
+                <input type="submit">
+                <input class="btn" type="button" value="cancel" onClick="browseProperties()">
+        </form>
+    </main>
+</div><!-- update -->
+<p>&nbsp;</p>
+
+
+<div id="delete" style="display: block">
+    <main>
+    <form method="POST" id="deleteProperty">
+        <legend><strong>Delete Item Property</strong></legend>
+            <fieldset class="fields">
+            <p>Are you sure you wish to delete the following?</p>
+
+            <label> <strong>ID: </strong></label> <span id="deletePropertyID"></span>
+              <label> <strong>Equipment Type Name: </strong> </label> <span id="deletePropertyName"></span>
+              
+      </fieldset>
+      <input class="btn" type="submit" id="DeleteProperty" value="Delete Item Property">
+            <input class="btn" type="button" value="cancel" onClick="browseProperties()">
+    </form> 
+</main>
+  </div><!-- delete -->
+
+
+</body>
+</html>
+
+
+{{!-- Embed our JavaScript to handle the DOM manipulation and AJAX request --}}
+<script src="./js/add_property.js"></script>
+<script src="./js/update_property.js"></script>

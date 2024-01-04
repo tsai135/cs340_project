@@ -1,0 +1,257 @@
+<!-- This code is based on the CS 340 starter code, with the exception of the citations below.
+     Date: 11/20/23
+     Source URL: https://github.com/osu-cs340-ecampus/nodejs-starter-app -->
+
+<!-- Citation for the following function:
+     Function: $('#input-equipmentType').change(function() {}
+     Date: 11/20/23
+     Adapted from "Dynamically Add Remove input fields using JQuery Ajax"
+     Source URL: https://www.javatpoint.com/dynamically-add-remove-input-fields-using-jquery-ajax -->
+
+<!-- manage-equipments.hbs -->
+<!DOCTYPE html>
+<html>
+<script language="JavaScript">
+    /**
+     * Toggles visibility of different sections in the equipment management interface.
+     * 
+     * @param {string} dowhat - The action to be performed ('insert', 'update', 'delete', 'all', or default view).
+     * This function controls the display of four main sections: browse, insert, update, and delete.
+     * Based on the action, it hides or shows relevant sections to the user.
+     */
+    function showform(dowhat) {
+        // Hide all sections initially
+        document.getElementById('browse').style.display = 'none';
+        //document.getElementById('insert').style.display = 'none';
+        document.getElementById('update').style.display = 'none';
+        document.getElementById('delete').style.display = 'none';
+
+        // Based on the 'dowhat' parameter, make a specific section visible
+        switch(dowhat) {
+            case 'insert':
+                //document.getElementById('insert').style.display = 'block';
+                break;
+            case 'update':
+                document.getElementById('update').style.display = 'block';
+                break;
+            case 'delete':
+                document.getElementById('delete').style.display = 'block';
+                break;
+            case 'all':
+                document.getElementById('browse').style.display = 'block';
+                //document.getElementById('insert').style.display = 'block';
+                document.getElementById('update').style.display = 'block';
+                document.getElementById('delete').style.display = 'block';
+                break;
+            default:
+                // Default view is 'browse'
+                document.getElementById('browse').style.display = 'block';
+        }
+    }
+
+    // Helper functions to invoke 'showform' with specific actions
+    function newEquipment() { showform('insert'); }
+    function updateEquipment(pid) { showform('update'); }
+    function browseEquipments() { showform ('browse'); }
+    function showAll() { showform ('all'); }
+</script>
+
+<head>
+    <title>Manage Equipments</title>
+    <link rel="stylesheet" type="text/css" href="style.css">
+    <style>
+
+    </style>
+</head>
+<body onload="browseEquipments()">
+    <h1>Create, View, Update and Delete Equipments</h1>
+    <nav>
+        <a href="index.hbs">Home</a>
+        <a href="view-equipment-transactions.hbs">Equipment Lookup</a>
+        <a href="manage-equipment-transactions.hbs">Equipment Transactions</a>
+        <a href="shop-inventory.hbs">Shop Inventory</a>
+    </nav>
+    <br>
+    <nav>
+        <h2>Advanced Tools</h2>
+        <a href="manage-equipments.hbs">Equipment Management</a>
+        <a href="manage-equipment-types.hbs">Equipment Types</a>
+        <a href="manage-properties.hbs">Item Properties</a>
+        <a href="manage-equipment-properties.hbs">Equipment Details</a>
+        <a href="manage-equipment-type-properties.hbs">Type-Specific Properties</a>
+        <a href="manage-statuses.hbs">Status Management</a>
+        <a href="manage-transition-statuses.hbs">Workflow Management</a>
+    </nav>
+    <br>
+<div id="browse">
+    <main>
+        <section>
+
+
+            <h1>Add New Equipment</h1>
+
+            <!-- Form to add a record to the table  -->
+
+            <p>To add a new equipment, please enter its information below and click 'Submit'!</p>
+            <form id="add-equipment-form-ajax">
+                <label for="input-barcode">Barcode: </label>
+                <input type="text" name="input-barcode" id="input-barcode">
+                
+                <label for="input-serializationTimestamp">Time: </label>
+                <input type="datetime-local" name="input-serializationTimestamp" id="input-serializationTimestamp">
+
+                <label for="input-equipmentType">Type: </label>
+                    <select name="input-equipmentType" id="input-equipmentType">
+                        <option value="">Select an Equipment Type</option>
+                        {{#each equipmentTypes}}
+                        <option value="{{this.equipmentTypeID}}">{{this.equipmentTypeName}}</option>
+                        {{/each}}
+                    </select>
+
+                <br>
+                <br>
+
+                <!-- Dynamic form fields based on equipment type -->
+                <div id="dynamic-fields-container"></div>
+
+                <br>
+                <br>
+
+                <input type="submit">
+            </form>
+
+            <script>
+                // Attach an event listener to the equipmentType dropdown
+                $('#input-equipmentType').change(function() {
+                    var selectedEquipmentType = $(this).val();
+
+                    // Make an AJAX request to fetch properties based on the selected equipment type
+                    $.ajax({
+                        url: '/get-properties', // Create a new route in the server to handle this request
+                        method: 'GET',
+                        data: { equipmentTypeID: selectedEquipmentType },
+                        success: function(data) {
+                            // Update the dynamic form fields based on the response
+                            var dynamicFieldsContainer = $('#dynamic-fields-container');
+                            dynamicFieldsContainer.empty();
+
+                            $.each(data, function(index, property) {
+                                dynamicFieldsContainer.append(`
+                                    <label for="input-${property.propertyID}">${property.Property}: </label>
+                                    <input type="text" name="input-${property.propertyID}" id="input-${property.Property}">
+                                    <br>
+                                    <br>
+                                `);
+                            });
+                        },
+                        error: function(error) {
+                            console.error('Error fetching properties:', error);
+                        }
+                    });
+                });
+            </script>
+
+            <br>
+            <br>
+            <br>
+            <br>
+
+            <h1>Manage Existing Equipment</h1>
+
+            <br>
+
+
+            {{!-- Create a table --}}
+            <table id="equipments-table">
+                {{!-- Header section --}}
+                <thead>
+                    {{!-- For just the first row, we print each key of the row object as a header cell so we know what each column means when the page renders --}}
+                    <tr>
+                        <th>Equipment ID</th>
+                        <th>Equipment Barcode</th>
+                        <th>Serialized Datetime</th>
+                        <th>Type</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+
+                {{!-- Body section --}}
+                <tbody>
+                    {{!-- For each row, print the id, barcode, serialized datetime, and equipment type ID, in order --}}
+                    {{#each data}}
+                    <tr>
+                        <td>{{this.equipmentID}}</td>
+                        <td>{{this.barcode}}</td>
+                        <td>{{this.serializationTimestamp}}</td>
+                        <td>{{this.equipmentTypeName}}</td>
+                        <td>
+                            <button class="btn edit" onClick="handleEditClick('{{this.equipmentID}}')">Edit</button>
+                            <button class="btn delete" onClick="deleteEquipment('{{this.equipmentID}}', '{{this.barcode}}')">Delete</button>
+                        </td>
+                    </tr>
+                    {{/each}}
+                </tbody>
+            </table>
+            <script src="./js/delete_equipment.js"></script>
+            
+            <br>
+            <br>
+            <br>
+            <br>
+
+        </section>
+    </main>
+</div>
+<p>&nbsp;</p>
+
+<div id="update" style="display: none">
+    <main>
+            <form id="update-equipment-form-ajax">
+                <label for="input-equipmentID">ID: </label>
+                <input type="text" name="input-equipmentID-update" id="input-equipmentID-update">
+                <label for="input-barcode">Barcode: </label>
+                <input type="text" name="input-barcode-update" id="input-barcode-update">
+                
+                <label for="input-serializationTimestamp">Time: </label>
+                <input type="datetime-local" name="input-serializationTimestamp-update" id="input-serializationTimestamp-update">
+
+                <label for="input-equipmentType">Type: </label>
+                    <select name="input-equipmentType-update" id="input-equipmentType-update">
+                        <option value="">Select an Equipment Type</option>
+                        {{#each equipmentTypes}}
+                        <option value="{{this.equipmentTypeID}}">{{this.equipmentTypeName}}</option>
+                        {{/each}}
+                    </select>
+                <input type="submit">
+                <input class="btn" type="button" value="cancel" onClick="browseEquipments()">
+        </form>
+    </main>
+</div><!-- update -->
+<p>&nbsp;</p>
+
+
+<div id="delete" style="display: block">
+    <main>
+    <form method="POST" id="deleteEquipment">
+        <legend><strong>Delete Equipment</strong></legend>
+            <fieldset class="fields">
+            <p>Are you sure you wish to delete the following?</p>
+            {{!-- <input type="hidden" name="equipmentID" id="deleteequipmentID" value="1"> --}}
+            <label> <strong>ID: </strong></label> <span id="deleteequipmentID"></span>
+              <label> <strong>Barcode: </strong> </label> <span id="deleteBarcode"></span>
+              
+      </fieldset>
+      <input class="btn" type="submit" id="DeleteEquipment" value="Delete Equipment">
+            <input class="btn" type="button" value="cancel" onClick="browseEquipments()">
+    </form> 
+</main>
+  </div><!-- delete -->
+
+
+</body>
+</html>
+
+
+{{!-- Embed our JavaScript to handle the DOM manipulation and AJAX request --}}
+<script src="./js/add_equipment.js"></script>
+<script src="./js/update_equipment.js"></script>

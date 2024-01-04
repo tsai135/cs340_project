@@ -1,0 +1,162 @@
+{{!--
+    Based on the CS 340 starter code, with the exception of the citations below:
+
+    Date: 12/05/23
+    Source URL: https://github.com/osu-cs340-ecampus/nodejs-starter-app
+
+--}}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>View Equipment Transactions</title>
+    <!-- Link to external CSS for styling -->
+    <link rel="stylesheet" type="text/css" href="style.css">
+     <script language="JavaScript">
+        // Fetches transactions based on the selected barcode
+        function fetchTransactionsByBarcode(barcode) {
+    // Log the barcode being used for the fetch request
+    console.log("Fetching transactions for barcode:", barcode);
+
+    fetch('/get-transactions-by-barcode/' + barcode)
+    .then(response => {
+        // Log the response status
+        console.log("Response status:", response.status);
+
+        // Check if the response is OK before proceeding to parse it as JSON
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        return response.json();
+    })
+    .then(data => {
+        // Log the data received from the server
+        console.log("Data received:", data);
+
+        // Call the function to populate the transactions table with the received data
+        populateTransactionsTable(data);
+    })
+    .catch(error => {
+        // Log any errors that occur during the fetch request or processing of the response
+        console.error('Error fetching transactions:', error);
+        alert('Error fetching transactions for the selected barcode.');
+    });
+}
+
+
+        // Populates the transactions table
+        function populateTransactionsTable(transactions) {
+            const table = document.getElementById('transactionsTableBody');
+            table.innerHTML = ''; // Clear existing rows
+
+            transactions.forEach(transaction => {
+                const row = table.insertRow();
+                row.innerHTML = `
+                    <td>${transaction.equipmentTransactionID}</td>
+                    <td>${transaction.barcode}</td>
+                    <td>${transaction.statusName}</td>
+                    <td>${transaction.transactionDate}</td>
+                    <td>
+                        <!-- Optionally include Edit/Delete buttons if needed -->
+                    </td>
+                `;
+            });
+        }
+
+        // Fetches barcodes and populates the barcode dropdown
+        function populateBarcodeDropdown() {
+            const barcodeSelect = document.getElementById('barcodeLookup');
+            
+            // Create and append the "Select" option
+            let selectOption = new Option('Select', '');
+            barcodeSelect.appendChild(selectOption);
+
+            fetch('/get-all-barcodes')
+                .then(response => response.json())
+                .then(barcodes => {
+                    // Clear existing options except the "Select" option
+                    barcodeSelect.innerHTML = '';
+                    barcodeSelect.appendChild(selectOption);
+
+                    // Populate the dropdown with fetched barcodes
+                    barcodes.forEach(barcode => {
+                        let option = new Option(barcode.barcode, barcode.barcode);
+                        barcodeSelect.add(option);
+                    });
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Error fetching barcodes.');
+                });
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            populateBarcodeDropdown();
+
+            const barcodeLookup = document.getElementById('barcodeLookup');
+            barcodeLookup.addEventListener('change', function() {
+                
+                // Check if "Select" option is selected
+                if (this.value === '') {
+                    // prevent execution for "Select" option 
+                    return
+                }
+
+                fetchTransactionsByBarcode(this.value);
+            });
+        });
+    </script>
+</head>
+<body>
+    <!-- Title for the viewing page -->
+    <h1>View Equipment Transactions</h1>
+    <!-- Placeholder for navigation links -->
+    <nav>
+        <a href="index.hbs">Home</a>
+        <a href="view-equipment-transactions.hbs">Equipment Lookup</a>
+        <a href="manage-equipment-transactions.hbs">Equipment Transactions</a>
+        <a href="shop-inventory.hbs">Shop Inventory</a>
+        <!-- Additional navigation links as required -->
+    </nav>
+    <br>
+    <nav>
+        <h2>Advanced Tools</h2>
+        <a href="manage-equipments.hbs">Equipment Management</a>
+        <a href="manage-equipment-types.hbs">Equipment Types</a>
+        <a href="manage-properties.hbs">Item Properties</a>
+        <a href="manage-equipment-properties.hbs">Equipment Details</a>
+        <a href="manage-equipment-type-properties.hbs">Type-Specific Properties</a>
+        <a href="manage-statuses.hbs">Status Management</a>
+        <a href="manage-transition-statuses.hbs">Workflow Management</a>
+    </nav>
+    <br>
+     <main>
+        <div>
+            <label for="barcodeLookup">Select Equipment Barcode:</label>
+            <select id="barcodeLookup">
+                {{#each barcodes}}
+                <option value="{{this.barcode}}">{{this.barcode}}</option>
+                {{/each}}
+            </select>
+        </div>
+
+        <div id="view">
+            <h2>Transactions</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Transaction ID</th>
+                        <th>Equipment Barcode</th>
+                        <th>Status</th>
+                        <th>Transaction Date</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="transactionsTableBody">
+                    <!-- Transactions will be populated here -->
+                </tbody>
+            </table>
+        </div>
+    </main>
+
+</body>
+</html>

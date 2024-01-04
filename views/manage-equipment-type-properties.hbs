@@ -1,0 +1,196 @@
+<!-- This code is based on the CS 340 starter code with the exception of the citations below.
+     Date: 11/20/23
+     Source URL: https://github.com/osu-cs340-ecampus/nodejs-starter-app -->
+
+<!-- Citation for the following functions:
+     $('#property-dropdown').change(function () {})
+     $('#submit-property').click(function () {})
+     Date: 12/7/23
+     Adapted from "Make submit button active when value on chosen dropdown option is more than 0" on StackOverflow
+     Source URL: https://stackoverflow.com/questions/54114149/make-submit-button-active-when-value-on-chosen-dropdown-option-is-more-than-0 -->
+
+
+
+<!-- manage-equipment-type-properties.hbs -->
+<!DOCTYPE html>
+<html>
+<script language="JavaScript">
+    /**
+     * Toggles visibility of different sections in the equipment management interface.
+     * 
+     * @param {string} dowhat - The action to be performed ('insert', 'update', 'delete', 'all', or default view).
+     * This function controls the display of four main sections: browse, insert, update, and delete.
+     * Based on the action, it hides or shows relevant sections to the user.
+     */
+    function showform(dowhat) {
+        // Hide all sections initially
+        document.getElementById('browse').style.display = 'none';
+        //document.getElementById('insert').style.display = 'none';
+        //document.getElementById('update').style.display = 'none';
+        //document.getElementById('delete').style.display = 'none';
+
+        // Based on the 'dowhat' parameter, make a specific section visible
+        switch(dowhat) {
+            case 'insert':
+                //document.getElementById('insert').style.display = 'block';
+                break;
+            case 'update':
+                document.getElementById('update').style.display = 'block';
+                break;
+            case 'delete':
+                document.getElementById('delete').style.display = 'block';
+                break;
+            case 'all':
+                document.getElementById('browse').style.display = 'block';
+                //document.getElementById('insert').style.display = 'block';
+                document.getElementById('update').style.display = 'block';
+                document.getElementById('delete').style.display = 'block';
+                break;
+            default:
+                // Default view is 'browse'
+                document.getElementById('browse').style.display = 'block';
+        }
+    }
+
+    // Helper functions to invoke 'showform' with specific actions
+    function newTypeSpecificProperty() { showform('insert'); }
+    function updateTypeSpecificProperty(pid) { showform('update'); }
+    function browseTypeSpecificProperties() { showform ('browse'); }
+    function showAll() { showform ('all'); }
+</script>
+
+<head>
+    <title>Manage Type-Specific Properties</title>
+    <link rel="stylesheet" type="text/css" href="style.css">
+    <style>
+
+    </style>
+</head>
+<body onload="browseTypeSpecificProperties()">
+    <h1>Create, View, Update and Delete Type-Specific Properties</h1>
+    <nav>
+        <a href="index.hbs">Home</a>
+        <a href="view-equipment-transactions.hbs">Equipment Lookup</a>
+        <a href="manage-equipment-transactions.hbs">Equipment Transactions</a>
+        <a href="shop-inventory.hbs">Shop Inventory</a>
+    </nav>
+    <br>
+    <nav>
+        <h2>Advanced Tools</h2>
+        <a href="manage-equipments.hbs">Equipment Management</a>
+        <a href="manage-equipment-types.hbs">Equipment Types</a>
+        <a href="manage-properties.hbs">Item Properties</a>
+        <a href="manage-equipment-properties.hbs">Equipment Details</a>
+        <a href="manage-equipment-type-properties.hbs">Type-Specific Properties</a>
+        <a href="manage-statuses.hbs">Status Management</a>
+        <a href="manage-transition-statuses.hbs">Workflow Management</a>
+    </nav>
+    <br>
+<div id="browse">
+    <main>
+        <section>
+            <h1>Manage Type-Specific Properties</h1>
+
+            <p>First, select the equipment type to manage its type-specific properties:</p>
+            <br>
+            
+            <form id="add-equipment-type-property-form-ajax">
+            <label for="input-equipmentType">Type: </label>
+            <select name="input-equipmentType" id="input-equipmentType">
+                <option value="">Select an Equipment Type</option>
+                {{#each equipmentTypesData}}
+                <option value="{{this.equipmentTypeID}}">{{this.equipmentTypeName}}</option>
+                {{/each}}
+            </select>
+            </form>
+
+            <br>
+
+
+
+<script>
+    // Initially hide the table, dropdown, and add-property-message
+    $('#property-table').hide();
+    $('#property-dropdown').hide();
+    $('#add-property-message').hide();
+
+    // Attach an event listener to the equipmentType dropdown
+    $('#input-equipmentType').change(function () {
+        manageTypeSpecificPropertiesMain();
+    });
+</script>
+
+            <!-- Table to display properties -->
+            <table id="property-table">
+                <thead id="property-table-head">
+                    <!-- Table header will be dynamically populated -->
+                </thead>
+                <tbody id="property-table-body">
+                    <!-- Table body will be dynamically populated -->
+                </tbody>
+            </table>
+            
+            <br>
+
+            <!-- HTML message to add a new type-specific property -->
+            <p id="add-property-message" style="display: none;">
+                To add a new type-specific property, please select a property from the dropdown and click 'Submit'!
+            </p>
+
+            <!-- Dropdown to select properties -->
+            <select id="property-dropdown" style="display: none;">
+                <!-- Dropdown options will be dynamically populated -->
+            </select>
+
+            <!-- Submit button -->
+            <button id="submit-property" style="display: none;">Submit</button>
+
+
+            <!-- JavaScript -->
+            <script>
+                // Existing JavaScript code
+
+                // Show Submit button when a property is selected from the dropdown
+                $('#property-dropdown').change(function () {
+                    if ($(this).val()) {
+                        $('#submit-property').show();
+                    } else {
+                        $('#submit-property').hide();
+                    }
+                });
+
+                // Submit button click handler
+                $('#submit-property').click(function () {
+                    var selectedPropertyID = $('#property-dropdown').val();
+                    var selectedEquipmentTypeID = $('#input-equipmentType').val();
+
+                    // Perform AJAX POST request to add type-specific property
+                    $.ajax({
+                        url: '/add-type-specific-property-ajax',
+                        method: 'POST',
+                        data: {
+                            equipmentTypeID: selectedEquipmentTypeID,
+                            propertyID: selectedPropertyID
+                        },
+                        success: function (response) {
+                            // Handle success response if needed
+                            console.log('Type-specific property added:', response.message);
+
+                            // updates table view with new added property
+                            manageTypeSpecificPropertiesMain();
+                        },
+                        error: function (error) {
+                            console.error('Error adding type-specific property:', error);
+                            // Handle error response or show error message to the user
+                        }
+                    });
+                });
+            </script>
+
+
+</body>
+</html>
+
+
+{{!-- Embed our JavaScript to handle the DOM manipulation and AJAX request --}}
+<script src="./js/manage_equipment_type_property.js"></script>

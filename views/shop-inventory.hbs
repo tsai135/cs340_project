@@ -1,0 +1,123 @@
+{{!--
+    Based on the CS 340 starter code, with the exception of the citations below:
+
+    Date: 12/07/23
+    Source URL: https://github.com/osu-cs340-ecampus/nodejs-starter-app
+
+--}}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Shop Inventory</title>
+    <link rel="stylesheet" type="text/css" href="style.css">
+    <script language="JavaScript">
+        function sortTable(columnIndex, type) {
+            var table, rows, switching, i, x, y, shouldSwitch;
+            table = document.getElementById("inventoryTable");
+            switching = true;
+            while (switching) {
+                switching = false;
+                rows = table.rows;
+                for (i = 1; i < (rows.length - 1); i++) {
+                    shouldSwitch = false;
+                    x = rows[i].getElementsByTagName("TD")[columnIndex];
+                    y = rows[i + 1].getElementsByTagName("TD")[columnIndex];
+
+                    if (type === 'number') {
+                        if (Number(x.innerHTML) > Number(y.innerHTML)) {
+                            shouldSwitch = true;
+                            break;
+                        }
+                    } else if (type === 'text') {
+                        if (x.innerHTML.toLowerCase() > y.innerHTML.toLowerCase()) {
+                            shouldSwitch = true;
+                            break;
+                        }
+                    }
+                }
+                if (shouldSwitch) {
+                    rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
+                    switching = true;
+                }
+            }
+        }
+        function filterAndSearch() {
+            var input, filter, table, tr, td, i, txtValue;
+            input = document.getElementById("searchInput");
+            filter = input.value.toUpperCase();
+            table = document.getElementById("inventoryTable");
+            tr = table.getElementsByTagName("tr");
+
+            // Loop through all table rows, and hide those who don't match the search query
+            for (i = 0; i < tr.length; i++) {
+                td = tr[i].getElementsByTagName("td");
+                if (td.length > 0) {
+                    // Adjust the index based on your table structure
+                    if (td[1].textContent.toUpperCase().indexOf(filter) > -1 || td[2].textContent.toUpperCase().indexOf(filter) > -1) {
+                        tr[i].style.display = "";
+                    } else {
+                        tr[i].style.display = "none";
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body>
+    <h1>Shop Inventory</h1>
+    
+     <nav>
+        <a href="index.hbs">Home</a>
+        <a href="view-equipment-transactions.hbs">Equipment Lookup</a>
+        <a href="manage-equipment-transactions.hbs">Equipment Transactions</a>
+        <a href="shop-inventory.hbs">Shop Inventory</a>
+    </nav>
+    <nav>
+        <h2>Advanced Tools</h2>
+        <a href="manage-equipments.hbs">Equipment Management</a>
+        <a href="manage-equipment-types.hbs">Equipment Types</a>
+        <a href="manage-properties.hbs">Item Properties</a>
+        <a href="manage-equipment-properties.hbs">Equipment Details</a>
+        <a href="manage-equipment-type-properties.hbs">Type-Specific Properties</a>
+        <a href="manage-statuses.hbs">Status Management</a>
+        <a href="manage-transition-statuses.hbs">Workflow Management</a>
+    </nav>
+    <br>
+
+    <main>
+        <div>
+            <label for="searchInput">Search:</label>
+            <input type="text" id="searchInput" onkeyup="filterAndSearch()" placeholder="Search for barcodes or types...">
+        </div>
+        <table id="inventoryTable">
+            <thead>
+                <p>Click on column headers to sort the table by its respective category.</p>
+                <tr>
+                    <th class="sortable" onclick="sortTable(0, 'number')">Equipment ID</th>
+                    <th class="sortable" onclick="sortTable(1, 'text')">Barcode</th>
+                    <th class="sortable" onclick="sortTable(2, 'text')">Type</th>
+                    <th class="sortable" onclick="sortTable(3, 'text')">Properties</th>
+                    <!-- Add more headers as needed -->
+                </tr>
+            </thead>
+            <tbody>
+                {{#each equipments}}
+                <tr>
+                    <td>{{this.equipmentID}}</td>
+                    <td>{{this.barcode}}</td>
+                    <td>{{this.equipmentTypeName}}</td>
+                    <td>
+                        {{#each this.properties}}
+                            <p>{{this.propertyName}}: {{this.value}}</p>
+                        {{/each}}
+                    </td>
+                    <!-- Add more data rows as needed -->
+                </tr>
+                {{/each}}
+            </tbody>
+        </table>
+    </main>
+
+    <!-- Additional content and scripts as needed -->
+</body>
+</html>

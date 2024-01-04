@@ -1,0 +1,302 @@
+{{!--
+    The 'formatDateTimeForInput' function is utilized to format a date and time string for input fields.
+
+    Original Functionality:
+    - This function transforms a date and time string into the 'YYYY-MM-DDTHH:MM' format.
+
+    Date Parsing Technique:
+    - The method for parsing date strings draws inspiration from Stack Overflow:
+      https://stackoverflow.com/questions/76682404/creating-a-date-object-from-a-date-string-is-one-day-older
+
+    Citation Scope: 'formatDateTimeForInput' function
+    Originality: While the core function logic is original, the date parsing method is adapted from the provided source on Stack Overflow.
+    Source: Stack Overflow
+    Date: 12/09/23
+--}}
+
+
+<!DOCTYPE html>
+<html>
+<script language="JavaScript">
+    // Function to control the visibility of forms based on user interaction
+    function showform(dowhat) {
+        // Initially hide all forms
+        document.getElementById('add').style.display = 'none';
+        document.getElementById('update').style.display = 'none';
+        document.getElementById('delete').style.display = 'none';
+
+        // Display the appropriate form based on the action parameter
+        switch(dowhat) {
+            case 'add':
+                document.getElementById('add').style.display = 'block';
+                break;
+            case 'update':
+                document.getElementById('update').style.display = 'block';
+                break;
+            case 'delete':
+                document.getElementById('delete').style.display = 'block';
+                break;
+            default:
+                // Show the 'add' form by default
+                document.getElementById('add').style.display = 'block';
+        }
+    }
+
+    // Helper functions to trigger the display of forms
+    function newTransaction() { showform('add'); }
+    function updateTransaction(tid) {
+    // Fetch the transaction data from the server
+    fetch('/get-transactions-ajax/' + tid)
+        .then(response => response.json())
+        .then(data => {
+            // Populate the update form with transaction data
+            document.getElementById('input-transactionID-update').value = data.equipmentTransactionID;
+            document.getElementById('input-equipmentID-update').value = data.equipmentID;
+            document.getElementById('input-statusID-update').value = data.statusID;
+
+            // Format and set the transaction date, if available
+            if(data.transactionDate) {
+                const formattedDate = formatDateTimeForInput(data.transactionDate);
+                document.getElementById('input-transactionDate-update').value = formattedDate;
+            }
+
+            // Show the update form
+            showform('update');
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
+}
+
+function formatDateTimeForInput(dateTimeString) {
+    // Assuming dateTimeString is in a format that can be parsed by Date constructor
+    const date = new Date(dateTimeString);
+    // Format date to YYYY-MM-DDTHH:MM
+    return date.toISOString().slice(0, 16);
+}
+
+function deleteTransaction(tid) {
+    if (confirm('Are you sure you want to delete this transaction?')) {
+        fetch('/delete-transaction-ajax/' + tid, {
+            method: 'DELETE'
+        })
+        .then(response => {
+            if (response.ok) {
+                // Transaction deleted successfully, refresh the page
+                window.location.reload();
+            } else {
+                throw new Error('Error in deleting transaction');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while attempting to delete the transaction.');
+        });
+    }
+}
+
+function populateStatusDropdowns() {
+    fetch('/get-statuses-ajax')
+    .then(response => response.json())
+    .then(statuses => {
+        // Target both "Add" and "Update" dropdowns
+        const statusDropdowns = document.querySelectorAll('.status-dropdown');
+
+        statusDropdowns.forEach(dropdown => {
+            // Clear existing options
+            dropdown.innerHTML = '';
+
+            // Add new options
+            statuses.forEach(status => {
+                const option = document.createElement('option');
+                option.value = status.statusID;
+                option.textContent = status.statusName;
+                dropdown.appendChild(option);
+            });
+        });
+    })
+    .catch(error => console.error('Error:', error));
+}
+
+
+// Call this function when the page loads
+document.addEventListener('DOMContentLoaded', populateStatusDropdowns);
+
+function populateEquipmentDropdowns() {
+    fetch('/get-equipments-ajax')
+    .then(response => response.json())
+    .then(equipments => {
+        // Target both "Add" and "Update" dropdowns
+        const equipmentDropdowns = document.querySelectorAll('.equipment-dropdown');
+
+        equipmentDropdowns.forEach(dropdown => {
+            // Clear existing options
+            dropdown.innerHTML = '';
+
+            // Add new options
+            equipments.forEach(equipment => {
+                const option = document.createElement('option');
+                option.value = equipment.equipmentID;
+                option.textContent = `ID: ${equipment.equipmentID}, Barcode: ${equipment.barcode}`;
+                dropdown.appendChild(option);
+            });
+        });
+    })
+    .catch(error => console.error('Error:', error));
+}
+
+function makeStatusNameNull() {
+    // Set the statusID to NULL
+    document.getElementById('input-statusID-update').value = "";
+    
+    // Log the value of statusID to check if it's NULL
+    console.log("Status ID set to: " + document.getElementById('input-statusID-update').value);
+}
+
+
+
+// Call this function when the page loads
+document.addEventListener('DOMContentLoaded', () => {
+    populateStatusDropdowns();
+    populateEquipmentDropdowns();
+});
+
+</script>
+
+<head>
+    <title>Manage Equipment Transactions</title>
+    <!-- Link to external CSS for styling -->
+    <link rel="stylesheet" type="text/css" href="style.css">
+</head>
+<body onload="newTransaction()">
+    <!-- Title for the management page -->
+    <h1>Create, View, Update, and Delete Equipment Transactions</h1>
+    <!-- Placeholder for navigation links -->
+    <nav>
+        <a href="index.hbs">Home</a>
+        <a href="view-equipment-transactions.hbs">Equipment Lookup</a>
+        <a href="manage-equipment-transactions.hbs">Equipment Transactions</a>
+        <a href="shop-inventory.hbs">Shop Inventory</a>
+    </nav>
+    <br>
+    <nav>
+        <h2>Advanced Tools</h2>
+        <a href="manage-equipments.hbs">Equipment Management</a>
+        <a href="manage-equipment-types.hbs">Equipment Types</a>
+        <a href="manage-properties.hbs">Item Properties</a>
+        <a href="manage-equipment-properties.hbs">Equipment Details</a>
+        <a href="manage-equipment-type-properties.hbs">Type-Specific Properties</a>
+        <a href="manage-statuses.hbs">Status Management</a>
+        <a href="manage-transition-statuses.hbs">Workflow Management</a>
+    </nav>
+    <br>
+<main>
+   <!-- Section for adding new transactions -->
+    <div id="add">
+    <h2>Add New Transaction</h2>
+    <!-- Form for adding a new transaction -->
+    <form id="add-transaction-form-ajax">
+        <label for="input-statusID-add">Status Name:</label>
+<select name="input-statusID" id="input-statusID-add" class="status-dropdown" required>
+    <option value="">NULL</option> <!-- Add this line for the NULL option -->
+    <!-- Dynamically populate these options -->
+</select>
+
+
+        <label for="input-statusID-add">Status Name:</label>
+        <select name="input-statusID" id="input-statusID-add" class="status-dropdown" required>
+            <!-- Dynamically populate these options -->
+        </select>
+
+        <label for="input-transactionDate-add">Transaction Date:</label>
+        <input type="datetime-local" name="input-transactionDate" id="input-transactionDate-add" required>
+        <input type="submit" value="Add Transaction">
+    </form>
+</div>
+
+<!-- Section for updating transactions -->
+<div id="update" style="display: none">
+    <h2>Update Transaction</h2>
+    <!-- Form for updating an existing transaction -->
+    <form id="update-transaction-form-ajax">
+        <label for="input-transactionID-update">Transaction ID:</label>
+        <input type="number" name="transactionID" id="input-transactionID-update" required readonly>
+
+        <label for="input-equipmentID-update">Equipment ID:</label>
+        <select name="equipmentID" id="input-equipmentID-update" class="equipment-dropdown" required>
+            <!-- Dynamically populate these options -->
+        </select>
+
+        <label for="input-statusID-update">Status Name:</label>
+        <select name="statusID" id="input-statusID-update" class="status-dropdown" required>
+            <!-- Dynamically populate these options -->
+        </select>
+
+        <label for="input-transactionDate-update">Transaction Date:</label>
+        <input type="datetime-local" name="transactionDate" id="input-transactionDate-update" required>
+
+        <input type="submit" value="Update Transaction">
+        <button type="button" onclick="newTransaction()">Cancel</button>
+    </form>
+    <!-- Button to set statusID to NULL -->
+    <button type="button" onclick="makeStatusNameNull()">Make Status Name NULL - view in console</button>
+</div>
+
+
+
+<!-- Section for deleting transactions -->
+<div id="delete" style="display: none">
+    <h2>Delete Transaction</h2>
+    <!-- Form for deleting an existing transaction -->
+    <form id="delete-transaction-form">
+        <p>Confirmation message for deleting a transaction</p>
+        <label><strong>Transaction ID:</strong></label>
+        <span id="deleteTransactionID"></span>
+        <input type="submit" value="Delete Transaction">
+        <!-- Button to cancel the deletion and return to the default view -->
+        <button type="button" onclick="newTransaction()">Cancel</button>
+    </form>
+</div>
+<!-- Section for View Equipment Transactions -->
+<div id="view">
+    <h2>View Equipment Transactions</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Transaction ID</th>
+                <th>Equipment Barcode</th>
+                <th>Status</th>
+                <th>Transaction Date</th>
+                <th>Actions</th> <!-- Header for actions like edit and delete -->
+            </tr>
+        </thead>
+        <tbody>
+            {{#each transactions}}
+            <tr>
+                <td>{{this.equipmentTransactionID}}</td>
+                <td>{{this.equipmentBarcode}}</td>
+                <td>{{this.statusName}}</td>
+                <td>{{this.transactionDate}}</td>
+                <td>
+                    <!-- Edit button -->
+                    <button onclick="updateTransaction({{this.equipmentTransactionID}})">Edit</button>
+
+                    <!-- Delete button -->
+                    <button onclick="deleteTransaction({{this.equipmentTransactionID}})">Delete</button>
+                </td>
+            </tr>
+            {{/each}}
+        </tbody>
+    </table>
+</div>
+
+
+
+</main>
+<!-- Scripts for handling AJAX requests and form submissions -->
+<script src="./js/add_transaction.js"></script>
+<script src="./js/update_transaction.js"></script>
+<script src="./js/delete_transaction.js"></script>
+
+</body>
+</html>

@@ -1,0 +1,271 @@
+{{!--
+    Based on the CS 340 starter code, with the exception of the citations below:
+
+    Date: 12/03/23
+    Source URL: https://github.com/osu-cs340-ecampus/nodejs-starter-app
+
+--}}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Manage Valid Status Transitions</title>
+    <link rel="stylesheet" type="text/css" href="style.css">
+    <script language="JavaScript">
+        let transitionsData = []; // Store transitions data
+
+    // Shows the specified form
+    function showform(dowhat) {
+        document.getElementById('add').style.display = 'none';
+        document.getElementById('update').style.display = 'none';
+        document.getElementById('delete').style.display = 'none';
+
+        switch(dowhat) {
+            case 'add':
+                document.getElementById('add').style.display = 'block';
+                break;
+            case 'update':
+                document.getElementById('update').style.display = 'block';
+                break;
+            case 'delete':
+                document.getElementById('delete').style.display = 'block';
+                break;
+            default:
+                document.getElementById('add').style.display = 'block';
+        }
+    }
+
+    // Called to show add form
+    function newTransition() { 
+        showform('add'); 
+    }
+
+    // Fetches and updates transition data
+function updateTransition(validStatusTransitionID) {
+    console.log("Fetching transition ID:", validStatusTransitionID);
+    // Fetch the existing transition status data
+    fetch('/get-status-transitions/' + validStatusTransitionID)
+        .then(response => response.json())
+        .then(data => {
+            // Populate the update form fields
+            document.getElementById('input-validStatusTransitionID-update').value = data.validStatusTransitionID;
+            document.getElementById('input-validStatusTransitionName-update').value = data.validStatusTransitionName;
+            document.getElementById('input-validStatusTransitionDescription-update').value = data.validStatusTransitionDescription;
+            document.getElementById('input-preStatusID-update').value = data.preStatusID;
+            document.getElementById('input-postStatusID-update').value = data.postStatusID;
+
+            // Show the update form
+            showform('update');
+        })
+        .catch(error => console.error('Error:', error));
+}
+
+
+   
+// Deletes a transition
+function deleteTransition(validStatusTransitionID) {
+    const confirmation = confirm("Are you sure you want to delete this transition?");
+    if (confirmation) {
+        fetch('/delete-transition-status-ajax/' + validStatusTransitionID, { method: 'DELETE' })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                // Auto-refresh the page to reflect the deletion
+                location.reload();
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error deleting transition');
+            });
+    }
+}
+
+function populateStatusDropdowns() {
+    fetch('/get-statuses-ajax')
+    .then(response => response.json())
+    .then(statuses => {
+        // Get all status dropdown elements
+        const statusDropdowns = document.querySelectorAll('.status-dropdown');
+
+        statusDropdowns.forEach(dropdown => {
+            // Clear existing options
+            dropdown.innerHTML = '';
+
+            // Add new options
+            statuses.forEach(status => {
+                const option = document.createElement('option');
+                option.value = status.statusID;
+                option.textContent = `${status.statusID} - ${status.statusName}`;
+                dropdown.appendChild(option);
+            });
+        });
+    })
+    .catch(error => console.error('Error:', error));
+}
+
+// Call this function when the page loads
+document.addEventListener('DOMContentLoaded', populateStatusDropdowns);
+
+
+    // Fetches data when the page loads
+    function fetchData() {
+        fetch('/get-status-transitions')
+            .then(response => response.json())
+            .then(data => {
+                transitionsData = data;
+                populateTransitions();
+            })
+            .catch(error => console.error('Error:', error));
+    }
+
+    // Load data on window load
+    window.onload = fetchData;
+        
+    </script>
+</head>
+<body onload="newTransition()">
+    <h1>Create, View, Update and Delete Status Transitions</h1>
+    <nav>
+        <a href="index.hbs">Home</a>
+        <a href="view-equipment-transactions.hbs">Equipment Lookup</a>
+        <a href="manage-equipment-transactions.hbs">Equipment Transactions</a>
+        <a href="shop-inventory.hbs">Shop Inventory</a>
+    </nav>
+    <nav>
+        <h2>Advanced Tools</h2>
+        <a href="manage-equipments.hbs">Equipment Management</a>
+        <a href="manage-equipment-types.hbs">Equipment Types</a>
+        <a href="manage-properties.hbs">Item Properties</a>
+        <a href="manage-equipment-properties.hbs">Equipment Details</a>
+        <a href="manage-equipment-type-properties.hbs">Type-Specific Properties</a>
+        <a href="manage-statuses.hbs">Status Management</a>
+        <a href="manage-transition-statuses.hbs">Workflow Management</a>
+    </nav>
+    <br>
+<main>
+<!-- Section for Adding New Transitions -->
+<div id="add">
+    <h2>Add New Status Transition</h2>
+    <form id="add-status-transition-form">
+        <!-- Dropdown for Pre-Status ID -->
+        <label for="input-preStatusID">Pre-Status ID:</label>
+        <select id="input-preStatusID" name="preStatusID" required class="status-dropdown">
+            <!-- Options will be populated dynamically -->
+        </select>
+
+        <!-- Dropdown for Post-Status ID -->
+        <label for="input-postStatusID">Post-Status ID:</label>
+        <select id="input-postStatusID" name="postStatusID" required class="status-dropdown">
+            <!-- Options will be populated dynamically -->
+        </select>
+
+        <!-- Transition Name -->
+        <label for="input-validStatusTransitionName">Transition Name:</label>
+        <input type="text" id="input-validStatusTransitionName" name="validStatusTransitionName" required>
+
+        <!-- Description -->
+        <label for="input-validStatusTransitionDescription">Description:</label>
+        <textarea id="input-validStatusTransitionDescription" name="validStatusTransitionDescription" required></textarea>
+
+        <!-- Remaining fields go here -->
+
+        <!-- Submit Button -->
+        <input type="submit" value="Add Transition">
+    </form>
+</div>
+
+
+
+<!-- Section for Updating Transitions -->
+<div id="update" style="display: none">
+    <h2>Update Status Transition</h2>
+    <form id="update-status-transition-form">
+        <!-- Hidden field for transition ID -->
+        <input type="hidden" id="input-validStatusTransitionID-update" name="validStatusTransitionID">
+        
+        <!-- Transition Name -->
+        <label for="input-validStatusTransitionName-update">Transition Name:</label>
+        <input type="text" id="input-validStatusTransitionName-update" name="validStatusTransitionName" required>
+
+        <!-- Description -->
+        <label for="input-validStatusTransitionDescription-update">Description:</label>
+        <textarea id="input-validStatusTransitionDescription-update" name="validStatusTransitionDescription" required></textarea>
+
+        <!-- Dropdown for Pre-Status ID -->
+        <label for="input-preStatusID-update">Pre-Status ID:</label>
+        <select id="input-preStatusID-update" name="preStatusID" required class="status-dropdown">
+            <!-- Options will be populated dynamically -->
+        </select>
+
+        <!-- Dropdown for Post-Status ID -->
+        <label for="input-postStatusID-update">Post-Status ID:</label>
+        <select id="input-postStatusID-update" name="postStatusID" required class="status-dropdown">
+            <!-- Options will be populated dynamically -->
+        </select>
+
+        <!-- ... remaining fields ... -->
+
+        <!-- Submit Button for Editing -->
+        <input type="submit" value="Update Transition">
+        <button type="button" onclick="showform('view')">Cancel</button>
+    </form>
+</div>
+
+
+
+    </div>
+
+    <!-- Section for Deleting Transitions -->
+    <div id="delete" style="display: none">
+        <h2>Delete Status Transition</h2>
+        <form id="delete-status-transition-form">
+            <p>Are you sure you want to delete this transition?</p>
+            <label><strong>Transition ID:</strong></label>
+            <span id="deleteTransitionID"></span>
+            <input type="submit" value="Delete Transition">
+            <button type="button" onclick="newTransition()">Cancel</button>
+        </form>
+    </div>
+
+<!-- Section for Viewing Transitions -->
+<div id="view">
+    <h2>View Status Transitions</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Transition ID</th>
+                <th>Transition Name</th>
+                <th>Description</th>
+                <th>Pre-Status Name</th> <!-- Updated Header -->
+                <th>Post-Status Name</th> <!-- Updated Header -->
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{#each validStatusTransitions}}
+            <tr>
+                <td>{{this.validStatusTransitionID}}</td>
+                <td>{{this.validStatusTransitionName}}</td>
+                <td>{{this.validStatusTransitionDescription}}</td>
+                <td>{{this.preStatusName}}</td> <!-- Updated Field -->
+                <td>{{this.postStatusName}}</td> <!-- Updated Field -->
+                <td>
+                    <button onclick="updateTransition({{this.validStatusTransitionID}})">Edit</button>
+                    <button onclick="deleteTransition({{this.validStatusTransitionID}})">Delete</button>
+                </td>
+            </tr>
+            {{/each}}
+        </tbody>
+    </table>
+</div>
+
+
+</main>
+
+    <!-- Scripts for AJAX requests and form handling -->
+    <script src="./js/add_status_transition.js"></script>
+    <script src="./js/update_status_transition.js"></script>
+    <script src="./js/delete_status_transition.js"></script>
+</body>
+</html>

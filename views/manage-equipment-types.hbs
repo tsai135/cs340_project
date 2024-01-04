@@ -1,0 +1,221 @@
+<!-- This code is based on the CS 340 starter code with the exception of the citations below.
+     Date: 11/20/23
+     Source URL: https://github.com/osu-cs340-ecampus/nodejs-starter-app -->
+
+<!-- manage-equipment-types.hbs -->
+<!DOCTYPE html>
+<html>
+<script language="JavaScript">
+    /**
+     * Toggles visibility of different sections in the equipment management interface.
+     * 
+     * @param {string} dowhat - The action to be performed ('insert', 'update', 'delete', 'all', or default view).
+     * This function controls the display of four main sections: browse, insert, update, and delete.
+     * Based on the action, it hides or shows relevant sections to the user.
+     */
+    function showform(dowhat) {
+        // Hide all sections initially
+        document.getElementById('browse').style.display = 'none';
+        //document.getElementById('insert').style.display = 'none';
+        document.getElementById('update').style.display = 'none';
+        document.getElementById('delete').style.display = 'none';
+
+        // Based on the 'dowhat' parameter, make a specific section visible
+        switch(dowhat) {
+            case 'insert':
+                //document.getElementById('insert').style.display = 'block';
+                break;
+            case 'update':
+                document.getElementById('update').style.display = 'block';
+                break;
+            case 'delete':
+                document.getElementById('delete').style.display = 'block';
+                break;
+            case 'all':
+                document.getElementById('browse').style.display = 'block';
+                //document.getElementById('insert').style.display = 'block';
+                document.getElementById('update').style.display = 'block';
+                document.getElementById('delete').style.display = 'block';
+                break;
+            default:
+                // Default view is 'browse'
+                document.getElementById('browse').style.display = 'block';
+        }
+    }
+
+    // Helper functions to invoke 'showform' with specific actions
+    function newEquipmentType() { showform('insert'); }
+    function updateEquipmentType(pid) { showform('update'); }
+    function browseEquipmentTypes() { showform ('browse'); }
+    function showAll() { showform ('all'); }
+</script>
+
+<head>
+    <title>Manage Equipment Types</title>
+    <link rel="stylesheet" type="text/css" href="style.css">
+    <style>
+
+    </style>
+</head>
+<body onload="browseEquipmentTypes()">
+    <h1>Create, View, Update and Delete Equipment Types</h1>
+    <nav>
+        <a href="index.hbs">Home</a>
+        <a href="view-equipment-transactions.hbs">Equipment Lookup</a>
+        <a href="manage-equipment-transactions.hbs">Equipment Transactions</a>
+        <a href="shop-inventory.hbs">Shop Inventory</a>
+    </nav>
+    <br>
+    <nav>
+        <h2>Advanced Tools</h2>
+        <a href="manage-equipments.hbs">Equipment Management</a>
+        <a href="manage-equipment-types.hbs">Equipment Types</a>
+        <a href="manage-properties.hbs">Item Properties</a>
+        <a href="manage-equipment-properties.hbs">Equipment Details</a>
+        <a href="manage-equipment-type-properties.hbs">Type-Specific Properties</a>
+        <a href="manage-statuses.hbs">Status Management</a>
+        <a href="manage-transition-statuses.hbs">Workflow Management</a>
+    </nav>
+    <br>
+<div id="browse">
+    <main>
+        <section>
+
+
+            <h1>Add New Equipment Type</h1>
+
+            <!-- Form to add a record to the table  -->
+
+            <p>To add a new equipment type, please enter its information below and click 'Submit'!</p>
+            <form id="add-equipment-type-form-ajax">
+                <label for="input-equipmentTypeName">Name of Equipment Type: </label>
+                <input type="text" name="input-equipmentTypeName" id="input-equipmentTypeName">
+
+                <label for="input-equipmentTypeDescription">Description of Equipment Type: </label>
+                <input type="text" name="input-equipmentTypeDescription" id="input-equipmentTypeDescription">
+                
+                <label for="input-firstSupportDate">First Support Date: </label>
+                <input type="date" name="input-firstSupportDate" id="input-firstSupportDate">
+
+                <label for="input-discontinuedSupportDate">Discontinued Support Date: </label>
+                <input type="date" name="input-discontinuedSupportDate" id="input-discontinuedSupportDate">
+
+                <br>
+                <br>
+
+                <input type="submit">
+            </form>
+
+            <br>
+            <br>
+            <br>
+            <br>
+
+
+
+            <h1>Manage Existing Equipment Types</h1>
+            {{!-- <p>Please scan the barcode of your equipment:</p>
+            <form>
+                <input type="text" id="barcode" placeholder="">
+                <button class="btn Submit">Submit</button> 
+            </form> --}}
+            <br>
+
+
+            {{!-- Create a table --}}
+            <table id="equipment-types-table">
+                {{!-- Header section --}}
+                <thead>
+                    {{!-- For just the first row, we print each key of the row object as a header cell so we know what each column means when the page renders --}}
+                    <th>Type ID</th>
+                        <th>Name</th>
+                        <th>Description</th>
+                        <th>First Supported Date</th>
+                        <th>Discontinued Support Date</th>
+                        <th>
+                            Action
+                        </th>
+                    </tr>
+                </thead>
+
+                {{!-- Body section --}}
+                <tbody>
+                    {{!-- For each row, print each attribute in order --}}
+                    {{#each data}}
+                    <tr>
+                        <td>{{this.equipmentTypeID}}</td>
+                        <td>{{this.equipmentTypeName}}</td>
+                        <td>{{this.equipmentTypeDescription}}</td>
+                        <td>{{this.firstSupportDate}}</td>
+                        <td>{{this.discontinuedSupportDate}}</td>
+                        <td>
+                            <button class="btn edit" onClick="handleEditClick('{{this.equipmentTypeID}}')">Edit</button>
+                            <button class="btn delete" onClick="deleteEquipmentType('{{this.equipmentTypeID}}', '{{this.equipmentTypeName}}')">Delete</button>
+                        </td>
+                    </tr>
+                    {{/each}}
+                </tbody>
+            </table>
+            <script src="./js/delete_equipment_type.js"></script>
+            
+            <br>
+            <br>
+            <br>
+            <br>
+
+        </section>
+    </main>
+</div>
+<p>&nbsp;</p>
+
+<div id="update" style="display: none">
+    <main>
+            <form id="update-equipment-type-form-ajax">
+                <label for="input-equipmentTypeID">ID: </label>
+                <input type="text" name="input-equipmentTypeID-update" id="input-equipmentTypeID-update">
+                
+                <label for="input-equipmentTypeName">Name of Equipment Type: </label>
+                <input type="text" name="input-equipmentTypeName-update" id="input-equipmentTypeName-update">
+                
+                <label for="input-equipmentTypeDescription">Description of Equipment Type: </label>
+                <input type="text" name="input-equipmentTypeDescription-update" id="input-equipmentTypeDescription-update">
+                
+                <label for="input-firstSupportDate">First Support Date: </label>
+                <input type="date" name="input-firstSupportDate-update" id="input-firstSupportDate-update">
+
+                <label for="input-discontinuedSupportDate">Discontinued Support Date: </label>
+                <input type="date" name="input-discontinuedSupportDate-update" id="input-discontinuedSupportDate-update">
+
+                <input type="submit">
+                <input class="btn" type="button" value="cancel" onClick="browseEquipmentTypes()">
+        </form>
+    </main>
+</div><!-- update -->
+<p>&nbsp;</p>
+
+
+<div id="delete" style="display: block">
+    <main>
+    <form method="POST" id="deleteEquipmentType">
+        <legend><strong>Delete Equipment Type</strong></legend>
+            <fieldset class="fields">
+            <p>Are you sure you wish to delete the following?</p>
+            {{!-- <input type="hidden" name="equipmentID" id="deleteequipmentID" value="1"> --}}
+            <label> <strong>ID: </strong></label> <span id="deleteequipmentTypeID"></span>
+              <label> <strong>Equipment Type Name: </strong> </label> <span id="deleteEquipmentTypeName"></span>
+              
+      </fieldset>
+      <input class="btn" type="submit" id="DeleteEquipmentType" value="Delete Equipment Type">
+            <input class="btn" type="button" value="cancel" onClick="browseEquipmentTypes()">
+    </form> 
+</main>
+  </div><!-- delete -->
+
+
+</body>
+</html>
+
+
+{{!-- Embed our JavaScript to handle the DOM manipulation and AJAX request --}}
+<script src="./js/add_equipment_type.js"></script>
+<script src="./js/update_equipment_type.js"></script>
